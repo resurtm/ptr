@@ -18,23 +18,9 @@
 
 use serde::{Deserialize, Serialize};
 
-///
-///
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetUpdatesResponse {
-    ok: bool,
-    result: Option<Vec<GetUpdatesResponseResult>>,
-}
-
-///
-///
-#[derive(Debug, Serialize, Deserialize)]
-struct GetUpdatesResponseResult {
-    update_id: i64,
-}
-
+/// Implementation for the GetUpdatesResponse DTO.
 impl GetUpdatesResponse {
-    pub fn get_max_update_id(&self) -> Option<i64> {
+    fn get_max_update_id(&self) -> Option<i64> {
         match &self.result {
             Some(items) => {
                 let item = items.iter().max_by_key(|p| p.update_id)?;
@@ -43,8 +29,33 @@ impl GetUpdatesResponse {
             None => None,
         }
     }
+
+    pub fn get_next_update_id(&self) -> Option<i64> {
+        let x = self.get_max_update_id()?;
+        Some(x + 1)
+    }
 }
 
+/// Represents the following Telegram Bot API data type:
+/// <https://core.telegram.org/bots/api#update>
+/// Root main document.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetUpdatesResponse {
+    ok: bool,
+    result: Option<Vec<GetUpdatesResponseResult>>,
+}
+
+/// Represents the following Telegram Bot API data type:
+/// <https://core.telegram.org/bots/api#update>
+/// Result sub-key.
+#[derive(Debug, Serialize, Deserialize)]
+struct GetUpdatesResponseResult {
+    update_id: i64,
+}
+
+/// Represents the following Telegram Bot API data type:
+/// <https://core.telegram.org/bots/api#user>
+/// Root main document.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetMeResponse {
     ok: bool,
@@ -53,6 +64,9 @@ pub struct GetMeResponse {
     result: Option<GetMeResponseResult>,
 }
 
+/// Represents the following Telegram Bot API data type:
+/// <https://core.telegram.org/bots/api#user>
+/// Result sub-key.
 #[derive(Debug, Serialize, Deserialize)]
 struct GetMeResponseResult {
     id: i64,

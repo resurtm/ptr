@@ -21,16 +21,12 @@ mod tg;
 use config::Config;
 use std::error::Error;
 
+/// Main application entry point function.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let app = App::new()?;
     let result = app.run().await?;
     Ok(result)
-}
-
-fn increment_max_update_id(max_update_id: Option<i64>) -> Option<i64> {
-    let x = max_update_id?;
-    Some(x + 1)
 }
 
 struct App {
@@ -55,14 +51,14 @@ impl App {
     }
 
     async fn run_main_loop(&self) -> Result<(), Box<dyn Error>> {
-        let mut max_update_id = None;
+        let mut next_update_id = None;
         loop {
             let get_updates_resp = self
                 .tg
-                .get_updates(increment_max_update_id(max_update_id))
+                .get_updates(next_update_id)
                 .await?;
-            println!("{:#?}", get_updates_resp);
-            max_update_id = get_updates_resp.get_max_update_id();
+            println!("Telegram getUpdates response: {:#?}", get_updates_resp);
+            next_update_id = get_updates_resp.get_next_update_id();
         }
     }
 
