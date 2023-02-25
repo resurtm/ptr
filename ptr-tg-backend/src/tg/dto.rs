@@ -81,3 +81,44 @@ struct GetMeResponseResult {
     can_read_all_group_messages: bool,
     supports_inline_queries: bool,
 }
+
+/// Module contains unit tests for the DTO related code.
+#[cfg(test)]
+mod tests {
+    /// Tests the `GetUpdatesResponse::get_next_update_id` function. Case 1.
+    #[test]
+    fn get_next_update_id_case1() {
+        let data = super::mocks::get_updates_response_variation1();
+        assert_eq!(data.get_next_update_id(), None);
+    }
+
+    /// Tests the `GetUpdatesResponse::get_next_update_id` function. Case 2.
+    #[test]
+    fn get_next_update_id_case2() {
+        let data = super::mocks::get_updates_response_variation2();
+        assert_eq!(data.get_next_update_id(), Some(151));
+    }
+}
+
+/// Module contains mocks for different kind of tasks (tests, etc.).
+#[allow(dead_code)]
+mod mocks {
+    /// Generates a mocked instance of the `GetUpdatesResponse` object. Variation 1.
+    pub fn get_updates_response_variation1() -> super::GetUpdatesResponse {
+        super::GetUpdatesResponse {
+            ok: true,
+            result: None,
+        }
+    }
+
+    /// Generates a mocked instance of the `GetUpdatesResponse` object. Variation 2.
+    pub fn get_updates_response_variation2() -> super::GetUpdatesResponse {
+        super::GetUpdatesResponse {
+            ok: true,
+            result: Some(vec![
+                super::GetUpdatesResponseResult { update_id: 100 },
+                super::GetUpdatesResponseResult { update_id: 150 },
+            ]),
+        }
+    }
+}
