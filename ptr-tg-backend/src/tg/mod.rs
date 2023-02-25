@@ -18,6 +18,7 @@
 
 mod dto;
 
+use dto::{get_me::Response as GetMe, get_updates::Response as Upd};
 use std::error::Error;
 
 /// The Telegram Bot API client implementation details.
@@ -41,10 +42,7 @@ impl Client {
     /// # Arguments
     ///
     /// * `offset` - Identifier of the first update to be returned.
-    pub async fn get_updates(
-        &self,
-        offset: Option<i64>,
-    ) -> Result<dto::GetUpdatesResponse, Box<dyn Error>> {
+    pub async fn get_updates(&self, offset: Option<i64>) -> Result<Upd, Box<dyn Error>> {
         let mut get_params = vec![format!("timeout={}", self.long_polling_timeout)];
         if let Some(offset_val) = offset {
             get_params.push(format!("offset={}", offset_val));
@@ -55,15 +53,15 @@ impl Client {
             self.access_token,
             get_params.join("&")
         );
-        let resp: dto::GetUpdatesResponse = reqwest::get(get_updates_url).await?.json().await?;
+        let resp: Upd = reqwest::get(get_updates_url).await?.json().await?;
         Ok(resp)
     }
 
     /// Represents the getMe Telegram Bot API method.
     /// See here for more details: <https://core.telegram.org/bots/api#getme>.
-    pub async fn get_me(&self) -> Result<dto::GetMeResponse, Box<dyn Error>> {
+    pub async fn get_me(&self) -> Result<GetMe, Box<dyn Error>> {
         let get_me_url = format!("{}{}/getMe", Self::API_BASE_URL, self.access_token);
-        let resp: dto::GetMeResponse = reqwest::get(get_me_url).await?.json().await?;
+        let resp: GetMe = reqwest::get(get_me_url).await?.json().await?;
         Ok(resp)
     }
 

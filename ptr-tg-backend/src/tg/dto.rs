@@ -16,86 +16,121 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-use serde::{Deserialize, Serialize};
+/// Represents the following Telegram Bot API data type:
+/// <https://core.telegram.org/bots/api#update>.
+pub mod get_updates {
+    use serde::{Deserialize, Serialize};
 
-/// Implementation for the GetUpdatesResponse DTO.
-impl GetUpdatesResponse {
-    /// Finds the maximal Update ID value in the GetUpdatesResponse results.
-    fn get_max_update_id(&self) -> Option<i64> {
-        match &self.result {
-            Some(results) => {
-                let result = results.iter().max_by_key(|p| p.update_id)?;
-                Some(result.update_id)
+    /// Implementation for the GetUpdatesResponse DTO.
+    impl Response {
+        /// Finds the maximal Update ID value in the GetUpdatesResponse results.
+        fn get_max_update_id(&self) -> Option<i64> {
+            match &self.result {
+                Some(results) => {
+                    let result = results.iter().max_by_key(|p| p.update_id)?;
+                    Some(result.update_id)
+                }
+                None => None,
             }
-            None => None,
+        }
+
+        /// Finds the next Update ID value to be used to fetch the Telegram Bot API updates.
+        /// Related Telegram Bot API call with some more information:
+        /// <https://core.telegram.org/bots/api#getupdates>.
+        pub fn get_next_update_id(&self) -> Option<i64> {
+            let max_update_id = self.get_max_update_id()?;
+            Some(max_update_id + 1)
         }
     }
 
-    /// Finds the next Update ID value to be used to fetch the Telegram Bot API updates.
-    /// Related Telegram Bot API call with some more information:
-    /// <https://core.telegram.org/bots/api#getupdates>.
-    pub fn get_next_update_id(&self) -> Option<i64> {
-        let max_update_id = self.get_max_update_id()?;
-        Some(max_update_id + 1)
+    /// Root main document.
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct Response {
+        pub ok: bool,
+        pub result: Option<Vec<Result>>,
+    }
+
+    /// Result sub-key.
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct Result {
+        pub update_id: i64,
+        pub message: Message,
+    }
+
+    /// Result sub-key, message sub-key.
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct Message {
+        pub message_id: i64,
+        pub from: From,
+        pub chat: Chat,
+        pub date: i64,
+        pub text: String,
+    }
+
+    /// Result sub-key, message sub-key, from sub-key.
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct From {
+        pub id: i64,
+        pub is_bot: bool,
+        pub first_name: String,
+        pub last_name: String,
+        pub username: String,
+    }
+
+    /// Result sub-key, message sub-key, chat sub-key.
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct Chat {
+        pub id: i64,
+        pub title: String,
+        #[serde(rename = "type")]
+        pub type_: String,
+        pub all_members_are_administrators: bool,
     }
 }
 
 /// Represents the following Telegram Bot API data type:
-/// <https://core.telegram.org/bots/api#update>.
-/// Root main document.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetUpdatesResponse {
-    ok: bool,
-    result: Option<Vec<GetUpdatesResponseResult>>,
-}
-
-/// Represents the following Telegram Bot API data type:
-/// <https://core.telegram.org/bots/api#update>.
-/// Result sub-key.
-#[derive(Debug, Serialize, Deserialize)]
-struct GetUpdatesResponseResult {
-    update_id: i64,
-}
-
-/// Represents the following Telegram Bot API data type:
 /// <https://core.telegram.org/bots/api#user>.
-/// Root main document.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetMeResponse {
-    ok: bool,
-    error_code: Option<i16>,
-    description: Option<String>,
-    result: Option<GetMeResponseResult>,
-}
+pub mod get_me {
+    use serde::{Deserialize, Serialize};
 
-/// Represents the following Telegram Bot API data type:
-/// <https://core.telegram.org/bots/api#user>.
-/// Result sub-key.
-#[derive(Debug, Serialize, Deserialize)]
-struct GetMeResponseResult {
-    id: i64,
-    is_bot: bool,
-    first_name: String,
-    username: String,
-    can_join_groups: bool,
-    can_read_all_group_messages: bool,
-    supports_inline_queries: bool,
+    /// Root main document.
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct Response {
+        ok: bool,
+        error_code: Option<i16>,
+        description: Option<String>,
+        result: Option<Result>,
+    }
+
+    /// Result sub-key.
+    #[derive(Debug, Serialize, Deserialize)]
+    struct Result {
+        id: i64,
+        is_bot: bool,
+        first_name: String,
+        username: String,
+        can_join_groups: bool,
+        can_read_all_group_messages: bool,
+        supports_inline_queries: bool,
+    }
 }
 
 /// Module contains unit tests for the DTO related code.
 #[cfg(test)]
 mod tests {
+    use super::mocks::{get_updates_response_variation1, get_updates_response_variation2};
+
     /// Tests the `GetUpdatesResponse::get_next_update_id` function. Case 1.
     #[test]
     fn get_next_update_id_case1() {
-        let data = super::mocks::get_updates_response_variation1();
+        let data = get_updates_response_variation1();
         assert_eq!(data.get_next_update_id(), None);
     }
 
     /// Tests the `GetUpdatesResponse::get_next_update_id` function. Case 2.
     #[test]
     fn get_next_update_id_case2() {
-        let data = super::mocks::get_updates_response_variation2();
+        let data = get_updates_response_variation2();
         assert_eq!(data.get_next_update_id(), Some(151));
     }
 }
@@ -103,22 +138,56 @@ mod tests {
 /// Module contains mocks for different kind of tasks (tests, etc.).
 #[allow(dead_code)]
 mod mocks {
+    use super::get_updates as upd;
+
     /// Generates a mocked instance of the `GetUpdatesResponse` object. Variation 1.
-    pub fn get_updates_response_variation1() -> super::GetUpdatesResponse {
-        super::GetUpdatesResponse {
+    pub fn get_updates_response_variation1() -> upd::Response {
+        upd::Response {
             ok: true,
             result: None,
         }
     }
 
     /// Generates a mocked instance of the `GetUpdatesResponse` object. Variation 2.
-    pub fn get_updates_response_variation2() -> super::GetUpdatesResponse {
-        super::GetUpdatesResponse {
+    pub fn get_updates_response_variation2() -> upd::Response {
+        let from = upd::From {
+            id: 3001,
+            is_bot: false,
+            first_name: "John".to_string(),
+            last_name: "Preston".to_string(),
+            username: "john_preston".to_string(),
+        };
+        let chat = upd::Chat {
+            id: 3002,
+            title: "FloodChat123".to_string(),
+            type_: "group".to_string(),
+            all_members_are_administrators: true,
+        };
+        let result = vec![
+            upd::Result {
+                update_id: 100,
+                message: upd::Message {
+                    message_id: 301,
+                    from: from.clone(),
+                    chat: chat.clone(),
+                    date: 1500,
+                    text: "message one".to_string(),
+                },
+            },
+            upd::Result {
+                update_id: 150,
+                message: upd::Message {
+                    message_id: 302,
+                    from,
+                    chat,
+                    date: 1515,
+                    text: "Second Message".to_string(),
+                },
+            },
+        ];
+        upd::Response {
             ok: true,
-            result: Some(vec![
-                super::GetUpdatesResponseResult { update_id: 100 },
-                super::GetUpdatesResponseResult { update_id: 150 },
-            ]),
+            result: Some(result),
         }
     }
 }
