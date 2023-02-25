@@ -18,24 +18,57 @@
 
 mod tg;
 
+use config::Config;
 use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let get_me_resp = tg::get_me().await?;
-    println!("{:#?}", get_me_resp);
-
-    let mut max_update_id = None;
-    loop {
-        let get_updates_resp = tg::get_updates(increment_max_update_id(max_update_id)).await?;
-        println!("{:#?}", get_updates_resp);
-        max_update_id = get_updates_resp.get_max_update_id();
-    }
-
-    // Ok(())
+    let app = App::new()?;
+    let result = app.run().await?;
+    Ok(result)
 }
 
 fn increment_max_update_id(max_update_id: Option<i64>) -> Option<i64> {
     let x = max_update_id?;
     Some(x + 1)
+}
+
+struct App {
+    tg: tg::Client,
+}
+
+impl App {
+    fn new() -> Result<App, Box<dyn Error>> {
+        let config = Config::builder()
+            .add_source(config::File::with_name("Settings"))
+            .add_source(config::Environment::with_prefix("PTR_TG_BACKEND"))
+            .build()?;
+        let access_token = config.get_string("access_token")?;
+        let tg = tg::Client::new(access_token);
+        Ok(App { tg })
+    }
+
+    async fn run(&self) -> Result<(), Box<dyn Error>> {
+        self.run_get_me().await?;
+        self.run_main_loop().await?;
+        Ok(())
+    }
+
+    async fn run_main_loop(&self) -> Result<(), Box<dyn Error>> {
+        let mut max_update_id = None;
+        loop {
+            let get_updates_resp = self
+                .tg
+                .get_updates(increment_max_update_id(max_update_id))
+                .await?;
+            println!("{:#?}", get_updates_resp);
+            max_update_id = get_updates_resp.get_max_update_id();
+        }
+    }
+
+    async fn run_get_me(&self) -> Result<(), Box<dyn Error>> {
+        let get_me_resp = self.tg.get_me().await?;
+        println!("Telegram getMe response: {:#?}", get_me_resp);
+        Ok(())
+    }
 }

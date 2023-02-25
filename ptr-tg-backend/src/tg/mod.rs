@@ -20,26 +20,35 @@ mod dto;
 
 use std::error::Error;
 
-pub async fn get_updates(offset: Option<i64>) -> Result<dto::GetUpdatesResponse, Box<dyn Error>> {
-    let mut parts = vec!["timeout=120".to_string()];
-    if let Some(x) = offset {
-        parts.push(format!("offset={}", x));
+pub struct Client {
+    access_token: String,
+}
+
+impl Client {
+    pub fn new(access_token: String) -> Client {
+        Client { access_token }
     }
-    let get_updates_url = format!(
-        "https://api.telegram.org/bot{}/getUpdates?{}",
-        get_access_token(),
-        parts.join("&")
-    );
-    let resp: dto::GetUpdatesResponse = reqwest::get(get_updates_url).await?.json().await?;
-    Ok(resp)
-}
 
-pub async fn get_me() -> Result<dto::GetMeResponse, Box<dyn Error>> {
-    let get_me_url = format!("https://api.telegram.org/bot{}/getMe", get_access_token());
-    let resp: dto::GetMeResponse = reqwest::get(get_me_url).await?.json().await?;
-    Ok(resp)
-}
+    pub async fn get_updates(
+        &self,
+        offset: Option<i64>,
+    ) -> Result<dto::GetUpdatesResponse, Box<dyn Error>> {
+        let mut parts = vec!["timeout=120".to_string()];
+        if let Some(x) = offset {
+            parts.push(format!("offset={}", x));
+        }
+        let get_updates_url = format!(
+            "https://api.telegram.org/bot{}/getUpdates?{}",
+            self.access_token,
+            parts.join("&")
+        );
+        let resp: dto::GetUpdatesResponse = reqwest::get(get_updates_url).await?.json().await?;
+        Ok(resp)
+    }
 
-fn get_access_token() -> String {
-    return String::from("xxx");
+    pub async fn get_me(&self) -> Result<dto::GetMeResponse, Box<dyn Error>> {
+        let get_me_url = format!("https://api.telegram.org/bot{}/getMe", self.access_token);
+        let resp: dto::GetMeResponse = reqwest::get(get_me_url).await?.json().await?;
+        Ok(resp)
+    }
 }
