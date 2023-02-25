@@ -81,10 +81,19 @@ pub mod get_updates {
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct Chat {
         pub id: i64,
-        pub title: String,
+        /// Examples: "private", "group".
         #[serde(rename = "type")]
         pub type_: String,
-        pub all_members_are_administrators: bool,
+        /// Applies for the "group" type.
+        pub title: Option<String>,
+        /// Applies for the "group" type.
+        pub all_members_are_administrators: Option<bool>,
+        /// Applies for the "private" type.
+        pub first_name: Option<String>,
+        /// Applies for the "private" type.
+        pub last_name: Option<String>,
+        /// Applies for the "private" type.
+        pub username: Option<String>,
     }
 }
 
@@ -157,11 +166,23 @@ mod mocks {
             last_name: "Preston".to_string(),
             username: "john_preston".to_string(),
         };
-        let chat = upd::Chat {
+        let chat1 = upd::Chat {
             id: 3002,
-            title: "FloodChat123".to_string(),
             type_: "group".to_string(),
-            all_members_are_administrators: true,
+            title: Some("FloodChat123".to_string()),
+            all_members_are_administrators: Some(true),
+            first_name: None,
+            last_name: None,
+            username: None,
+        };
+        let chat2 = upd::Chat {
+            id: 3003,
+            type_: "private".to_string(),
+            title: None,
+            all_members_are_administrators: None,
+            first_name: Some("John".to_string()),
+            last_name: Some("Preston".to_string()),
+            username: Some("john_preston".to_string()),
         };
         let result = vec![
             upd::Result {
@@ -169,7 +190,7 @@ mod mocks {
                 message: upd::Message {
                     message_id: 301,
                     from: from.clone(),
-                    chat: chat.clone(),
+                    chat: chat1,
                     date: 1500,
                     text: "message one".to_string(),
                 },
@@ -179,7 +200,7 @@ mod mocks {
                 message: upd::Message {
                     message_id: 302,
                     from,
-                    chat,
+                    chat: chat2,
                     date: 1515,
                     text: "Second Message".to_string(),
                 },
