@@ -20,24 +20,28 @@ use serde::{Deserialize, Serialize};
 
 /// Implementation for the GetUpdatesResponse DTO.
 impl GetUpdatesResponse {
+    /// Finds the maximal Update ID value in the GetUpdatesResponse results.
     fn get_max_update_id(&self) -> Option<i64> {
         match &self.result {
-            Some(items) => {
-                let item = items.iter().max_by_key(|p| p.update_id)?;
-                Some(item.update_id)
+            Some(results) => {
+                let result = results.iter().max_by_key(|p| p.update_id)?;
+                Some(result.update_id)
             }
             None => None,
         }
     }
 
+    /// Finds the next Update ID value to be used to fetch the Telegram Bot API updates.
+    /// Related Telegram Bot API call with some more information:
+    /// <https://core.telegram.org/bots/api#getupdates>.
     pub fn get_next_update_id(&self) -> Option<i64> {
-        let x = self.get_max_update_id()?;
-        Some(x + 1)
+        let max_update_id = self.get_max_update_id()?;
+        Some(max_update_id + 1)
     }
 }
 
 /// Represents the following Telegram Bot API data type:
-/// <https://core.telegram.org/bots/api#update>
+/// <https://core.telegram.org/bots/api#update>.
 /// Root main document.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetUpdatesResponse {
@@ -46,7 +50,7 @@ pub struct GetUpdatesResponse {
 }
 
 /// Represents the following Telegram Bot API data type:
-/// <https://core.telegram.org/bots/api#update>
+/// <https://core.telegram.org/bots/api#update>.
 /// Result sub-key.
 #[derive(Debug, Serialize, Deserialize)]
 struct GetUpdatesResponseResult {
@@ -54,7 +58,7 @@ struct GetUpdatesResponseResult {
 }
 
 /// Represents the following Telegram Bot API data type:
-/// <https://core.telegram.org/bots/api#user>
+/// <https://core.telegram.org/bots/api#user>.
 /// Root main document.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetMeResponse {
@@ -65,7 +69,7 @@ pub struct GetMeResponse {
 }
 
 /// Represents the following Telegram Bot API data type:
-/// <https://core.telegram.org/bots/api#user>
+/// <https://core.telegram.org/bots/api#user>.
 /// Result sub-key.
 #[derive(Debug, Serialize, Deserialize)]
 struct GetMeResponseResult {

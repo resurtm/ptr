@@ -20,35 +20,63 @@ mod dto;
 
 use std::error::Error;
 
-pub struct Client {
-    access_token: String,
-}
-
+/// The Telegram Bot API client implementation details.
 impl Client {
-    pub fn new(access_token: String) -> Client {
-        Client { access_token }
+    /// Create a new instance of the Telegram Bot API client.
+    ///
+    /// # Arguments
+    ///
+    /// * `access_token` - A string which contains the Telegram Bot API access token value.
+    /// * `long_polling_timeout` - An integer value which contains long polling timeout value.
+    pub fn new(access_token: String, long_polling_timeout: u16) -> Client {
+        Client {
+            access_token,
+            long_polling_timeout,
+        }
     }
 
+    /// Represents the getUpdates Telegram Bot API method.
+    /// See here for more details: <https://core.telegram.org/bots/api#getupdates>.
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` - Identifier of the first update to be returned.
     pub async fn get_updates(
         &self,
         offset: Option<i64>,
     ) -> Result<dto::GetUpdatesResponse, Box<dyn Error>> {
-        let mut parts = vec!["timeout=120".to_string()];
-        if let Some(x) = offset {
-            parts.push(format!("offset={}", x));
+        let mut get_params = vec![format!("timeout={}", self.long_polling_timeout)];
+        if let Some(offset_val) = offset {
+            get_params.push(format!("offset={}", offset_val));
         }
         let get_updates_url = format!(
-            "https://api.telegram.org/bot{}/getUpdates?{}",
+            "{}{}/getUpdates?{}",
+            Self::API_BASE_URL,
             self.access_token,
-            parts.join("&")
+            get_params.join("&")
         );
         let resp: dto::GetUpdatesResponse = reqwest::get(get_updates_url).await?.json().await?;
         Ok(resp)
     }
 
+    /// Represents the getMe Telegram Bot API method.
+    /// See here for more details: <https://core.telegram.org/bots/api#getme>.
     pub async fn get_me(&self) -> Result<dto::GetMeResponse, Box<dyn Error>> {
-        let get_me_url = format!("https://api.telegram.org/bot{}/getMe", self.access_token);
+        let get_me_url = format!("{}{}/getMe", Self::API_BASE_URL, self.access_token);
         let resp: dto::GetMeResponse = reqwest::get(get_me_url).await?.json().await?;
         Ok(resp)
     }
+
+    /// Telegram Bot API base URL.
+    const API_BASE_URL: &str = "https://api.telegram.org/bot";
+}
+
+/// Represents the Telegram Bot API client with a bunch of API calls/methods.
+pub struct Client {
+    /// Telegram Bot API access token.
+    /// See more details here: <https://t.me/BotFather>.
+    access_token: String,
+    /// Long polling timeout value, for getUpdates Telegram Bot API call/method.
+    /// See here for more details: <https://core.telegram.org/bots/api#getupdates>.
+    long_polling_timeout: u16,
 }

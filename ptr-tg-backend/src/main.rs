@@ -29,42 +29,49 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(result)
 }
 
-struct App {
-    tg: tg::Client,
-}
-
+/// Main application struct implementation.
 impl App {
+    /// Build a new Telegram Bot application instance.
     fn new() -> Result<App, Box<dyn Error>> {
         let config = Config::builder()
             .add_source(config::File::with_name("Settings"))
             .add_source(config::Environment::with_prefix("PTR_TG_BACKEND"))
             .build()?;
+
         let access_token = config.get_string("access_token")?;
-        let tg = tg::Client::new(access_token);
+        let long_polling_timeout = config.get_int("long_polling_timeout")?;
+
+        let tg = tg::Client::new(access_token, long_polling_timeout as u16);
         Ok(App { tg })
     }
 
+    /// Application main entry point.
     async fn run(&self) -> Result<(), Box<dyn Error>> {
         self.run_get_me().await?;
         self.run_main_loop().await?;
         Ok(())
     }
 
+    /// Run application main loop.
     async fn run_main_loop(&self) -> Result<(), Box<dyn Error>> {
         let mut next_update_id = None;
         loop {
-            let get_updates_resp = self
-                .tg
-                .get_updates(next_update_id)
-                .await?;
+            let get_updates_resp = self.tg.get_updates(next_update_id).await?;
             println!("Telegram getUpdates response: {:#?}", get_updates_resp);
             next_update_id = get_updates_resp.get_next_update_id();
         }
     }
 
+    /// Get information about the current bot.
     async fn run_get_me(&self) -> Result<(), Box<dyn Error>> {
         let get_me_resp = self.tg.get_me().await?;
         println!("Telegram getMe response: {:#?}", get_me_resp);
         Ok(())
     }
+}
+
+/// Main application struct declaration.
+struct App {
+    /// Telegram Bot API client instance.
+    tg: tg::Client,
 }

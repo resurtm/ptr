@@ -17,3 +17,4 @@
 # DEALINGS IN THE SOFTWARE.
 
 access_token = "xxx"
+long_polling_timeout = 120
